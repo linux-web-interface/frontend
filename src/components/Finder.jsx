@@ -160,7 +160,7 @@ function Finder({ onClose, onMinimize, isMinimized }) {
                     return (
                       <tr
                         key={index}
-                        // onClick={() => setSelectedFile(file.name)}
+                        onClick={() => setSelectedFile(file.name)}
                         // onDoubleClick={() => {}}
                         className={selectedFile === file.name ? "selected" : ""}
                       >
