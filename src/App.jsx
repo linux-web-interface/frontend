@@ -1,36 +1,48 @@
-import './App.css';
-import MenuBar from './components/MenuBar';
-import Dock from './components/Dock';
-import DesktopIcons from './components/DesktopIcons';
-import { useState } from 'react';
-import Finder from './components/Finder';
+import "./App.css";
+import MenuBar from "./components/MenuBar";
+import Dock from "./components/Dock";
+import DesktopIcons from "./components/DesktopIcons";
+import { useEffect, useState } from "react";
+import Finder from "./components/Finder";
+import { useDirectory } from "./contexts/DirectoryContext";
+import api from "./js/api";
 
 function App() {
   const [isFinderOpen, setIsFinderOpen] = useState(false);
   const [isFinderMinimized, setIsFinderMinimized] = useState(false);
+  const { directory, setDirectory } = useDirectory();
+
+  useEffect(() => {
+    const getDirectory = async () => {
+      const request = await api.get("/dir");
+
+      setDirectory(request.data)
+    }
+
+    getDirectory();
+  }, []);
 
   return (
     <div className="desktop">
-
       <MenuBar />
 
-      <div className='desktop-content'>
+      <div className="desktop-content">
         <h1>GUI Linux Web Desktop</h1>
         <p>Selamat datang di ujung dunia!</p>
       </div>
 
       <DesktopIcons />
 
-     {isFinderOpen && (
-      <Finder
-        onClose={() => {
-          setIsFinderOpen(false);
-          setIsFinderMinimized(false);
-        }}
-        onMinimize={() => setIsFinderMinimized(true)}
-        isMinimized={isFinderMinimized}
-      />
-    )}
+      {isFinderOpen && (
+        <Finder
+          onClose={() => {
+            setIsFinderOpen(false);
+            setIsFinderMinimized(false);
+          }}
+          onMinimize={() => setIsFinderMinimized(true)}
+          isMinimized={isFinderMinimized}
+        />
+      )}
 
       <Dock
         onOpenFinder={() => {
