@@ -1,17 +1,18 @@
+.finder-container {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+}
 
 .finder-window {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-
   width: 650px;
   height: 400px;
-
+  position: relative;
   background: white;
   border-radius: 12px;
   overflow: hidden;
-
+  resize: both;
+  overflow: auto;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
@@ -53,6 +54,8 @@
   flex: 1;
   padding: 20px 25px;
   color: #333;
+  display: flex;
+  flex-direction: column;
 }
 
 .finder-content h2 {
@@ -330,7 +333,7 @@
 }
 
 .file-list {
-  height: calc(100% - 40px);
+  flex: 1;
   overflow-y: auto;
   overflow-x: auto;
 }
