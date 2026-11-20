@@ -42,6 +42,11 @@ function Finder() {
   const [selectedName, setSelectedName] = useState("");
   const selectedItem = sortedItems.find((item) => item.path === selectedFile);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const filteredItems = sortedItems.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+  );
+
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -55,10 +60,6 @@ function Finder() {
     x: window.innerWidth / 2 - size.w / 2,
     y: window.innerHeight / 2 - size.h / 2,
   });
-
-  // const currentLocation = navigationHistory[historyIndex];
-  // const currentFiles = currentLocation.files;
-  // const currentFolder = currentLocation.name;
 
   const handleSelectItem = (item) => {
     setSelectedFile(item.path);
@@ -145,104 +146,121 @@ function Finder() {
                 onClick={closeFinder}
               >
                 ×
-              </button>
-
+              </button>{" "}
               <button
                 className="window-button minimize-button"
                 onClick={minimizeFinder}
               >
-                −
-              </button>
-
+                {" "}
+                −{" "}
+              </button>{" "}
               <button
                 className="window-button fullscreen-button"
                 onClick={() => setIsFullScreen(!isFullScreen)}
               >
-                {isFullScreen ? "−" : "+"}
-              </button>
-            </div>
-
+                {" "}
+                {isFullScreen ? "−" : "+"}{" "}
+              </button>{" "}
+            </div>{" "}
             <span className="finder-title">
-              {isSelectionMode ? "Pilih File atau Folder" : "File Manager"}
-            </span>
-          </div>
-
+              {" "}
+              {isSelectionMode ? "Pilih File atau Folder" : "File Manager"}{" "}
+            </span>{" "}
+          </div>{" "}
           <div className="finder-body">
+            {" "}
             <div className="finder-content">
+              {" "}
               {isCreatingFolder && (
                 <div className="create-folder-box">
-                  <h3>New Folder</h3>
-
+                  {" "}
+                  <h3>New Folder</h3>{" "}
                   <input
                     type="text"
                     placeholder="Enter folder name"
                     value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value)}
                     autoFocus
-                  />
-
+                  />{" "}
                   <div className="create-folder-actions">
+                    {" "}
                     <button
                       onClick={() => {
                         setIsCreatingFolder(false);
                         setNewFolderName("");
                       }}
                     >
-                      Cancel
-                    </button>
+                      {" "}
+                      Cancel{" "}
+                    </button>{" "}
+                    <button onClick={() => {}}>Create</button>{" "}
+                  </div>{" "}
+                </div>
+              )}{" "}
+              <div className="finder-top">
+                <div className="finder-path">
+                  <div className="breadcrumb">
+                    {" "}
+                    {/* Root directory */}{" "}
+                    <div className="breadcrumb-item">
+                      {" "}
+                      <button
+                        onClick={() => navigateTo("/")}
+                        className={
+                          directory.current_dir === "/"
+                            ? "breadcrumb-active"
+                            : ""
+                        }
+                        title="Home"
+                      >
+                        {" "}
+                        <House size={15} />{" "}
+                      </button>{" "}
+                    </div>
+                    {directory.current_dir
+                      .split("/")
+                      .filter(Boolean)
+                      .reduce((acc, name, index, paths) => {
+                        const path = "/" + paths.slice(0, index + 1).join("/");
 
-                    <button onClick={() => {}}>Create</button>
+                        acc.push({
+                          name,
+                          path,
+                        });
+
+                        return acc;
+                      }, [])
+                      .map((location, index, paths) => (
+                        <div className="breadcrumb-item" key={location.path}>
+                          <span> / </span>
+
+                          <button
+                            onClick={() => navigateTo(location.path)}
+                            className={
+                              index === paths.length - 1
+                                ? "breadcrumb-active"
+                                : ""
+                            }
+                          >
+                            {location.name}
+                          </button>
+                        </div>
+                      ))}
                   </div>
                 </div>
-              )}
-              <div className="finder-path">
-                {/* Breadcrumb */}
-                <div className="breadcrumb">
-                  {/* Root directory */}
-                  <div className="breadcrumb-item">
-                    <button
-                      onClick={() => navigateTo("/")}
-                      className={
-                        directory.current_dir === "/" ? "breadcrumb-active" : ""
-                      }
-                      title="Home"
-                    >
-                      <House size={15} />
-                    </button>
-                  </div>
+                <div className="finder-search">
+                  <input
+                    type="text"
+                    placeholder="Search files and folders..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
 
-                  {directory.current_dir
-                    .split("/")
-                    .filter(Boolean)
-                    .reduce((acc, name, index, paths) => {
-                      const path = "/" + paths.slice(0, index + 1).join("/");
-
-                      acc.push({
-                        name,
-                        path,
-                      });
-
-                      return acc;
-                    }, [])
-                    .map((location, index, paths) => (
-                      <div className="breadcrumb-item" key={location.path}>
-                        <span> / </span>
-
-                        <button
-                          onClick={() => navigateTo(location.path)}
-                          className={
-                            index === paths.length - 1
-                              ? "breadcrumb-active"
-                              : ""
-                          }
-                        >
-                          {location.name}
-                        </button>
-                      </div>
-                    ))}
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery("")}>×</button>
+                  )}
                 </div>
               </div>
-
               <div className="file-list">
                 {error && <div className="finder-error">{error}</div>}
 
@@ -267,7 +285,7 @@ function Finder() {
                       <FinderSkeleton rows={8} />
                     ) : (
                       <>
-                        {sortedItems.map((file) => {
+                        {filteredItems.map((file) => {
                           const size = convertSize(file.size_bytes);
 
                           return (
@@ -301,9 +319,13 @@ function Finder() {
                           );
                         })}
 
-                        {sortedItems.length === 0 && (
+                        {filteredItems.length === 0 && (
                           <tr>
-                            <td colSpan="4">This folder is empty</td>
+                            <td colSpan="4">
+                              {searchQuery
+                                ? "No matching files or folders"
+                                : "This folder is empty"}
+                            </td>
                           </tr>
                         )}
                       </>
@@ -311,7 +333,6 @@ function Finder() {
                   </tbody>
                 </table>
               </div>
-
               {isSelectionMode && (
                 <div className="finder-selection-footer">
                   <div className="selection-input-group">

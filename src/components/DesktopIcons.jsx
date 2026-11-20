@@ -2,67 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import "./DesktopIcons.css";
 import Finder from "./Finder";
 import { useFinder } from "../contexts/FinderContext";
-
-const API_URL = import.meta.env.VITE_API_URL || "";
+import api from "../js/api";
+import { useDirectory } from "../contexts/DirectoryContext";
 
 function DesktopIcons() {
+  const { navigateTo } = useDirectory();
+  const { openFinder, closeFinder } = useFinder();
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const {
-    isFinderOpen,
-    setIsFinderOpen,
-    isFinderMinimized,
-    setIsFinderMinimized,
-    openFinder,
-  } = useFinder();
   const [error, setError] = useState("");
 
   const [contextMenu, setContextMenu] = useState(null);
-
-  const handleSelectShortcut = async (selectedItem) => {
-    const payload = {
-      id: crypto.randomUUID(),
-      name: selectedItem.name,
-      type: selectedItem.type,
-      path: selectedItem.path,
-      pos: getNextPosition(),
-    };
-
-    try {
-      const result = await apiRequest("/desktop", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      setItems((previous) => [...previous, result.item]);
-
-      setIsFinderOpen(false);
-    } catch (err) {
-      window.alert(err.message);
-    }
-  };
-
-  // ==============================
-  // API HELPER
-  // ==============================
-
-  const apiRequest = async (endpoint, options = {}) => {
-    const response = await fetch(`${API_URL}/api${endpoint}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(data.error || "Terjadi kesalahan pada API");
-    }
-
-    return data;
-  };
 
   // ==============================
   // GET DESKTOP ITEMS
@@ -73,11 +24,13 @@ function DesktopIcons() {
       setLoading(true);
       setError("");
 
-      const data = await apiRequest("/desktop");
+      const response = await api.get("/desktop");
 
-      setItems(data.items || []);
+      setItems(response.data.items || []);
     } catch (err) {
-      setError(err.message);
+      setError(
+        err.response?.data?.error || err.message || "Gagal memuat desktop",
+      );
     } finally {
       setLoading(false);
     }
@@ -86,6 +39,51 @@ function DesktopIcons() {
   useEffect(() => {
     fetchDesktop();
   }, [fetchDesktop]);
+
+  // ==============================
+  // FIND AVAILABLE POSITION
+  // ==============================
+
+  const handleOpenDesktopItem = async (item) => {
+    try {
+      // Buka Finder
+      openFinder();
+
+      // Navigasi ke lokasi item
+      if (item.type === "dir") {
+        await navigateTo(item.path);
+      } else {
+        // Jika file, buka direktori induknya
+        const parentPath =
+          item.path.substring(0, item.path.lastIndexOf("/")) || "/";
+
+        await navigateTo(parentPath);
+      }
+    } catch (err) {
+      console.error("Gagal membuka item:", err);
+    }
+  };
+
+  const getNextPosition = () => {
+    const usedPositions = new Set(
+      items.map((item) => `${item.pos.x}-${item.pos.y}`),
+    );
+
+    const maxColumns = 8;
+
+    for (let row = 0; ; row++) {
+      for (let column = 0; column < maxColumns; column++) {
+        const position = `${row}-${column}`;
+
+        if (!usedPositions.has(position)) {
+          return {
+            x: row,
+            y: column,
+          };
+        }
+      }
+    }
+  };
 
   // ==============================
   // CONTEXT MENU
@@ -124,71 +122,30 @@ function DesktopIcons() {
   }, []);
 
   // ==============================
-  // FIND AVAILABLE POSITION
+  // ADD DESKTOP SHORTCUT
   // ==============================
 
-  const getNextPosition = () => {
-    const usedPositions = new Set(
-      items.map((item) => `${item.pos.x}-${item.pos.y}`),
-    );
-
-    // Maksimal 8 kolom sebelum berpindah ke row berikutnya
-    const maxColumns = 8;
-
-    for (let row = 0; ; row++) {
-      for (let column = 0; column < maxColumns; column++) {
-        const position = `${row}-${column}`;
-
-        if (!usedPositions.has(position)) {
-          return {
-            x: row,
-            y: column,
-          };
-        }
-      }
-    }
-  };
-
-  // ==============================
-  // ADD DESKTOP ITEM
-  // ==============================
-
-  const addDesktopItem = async (type) => {
-    closeContextMenu();
-
-    const name = window.prompt(
-      `Masukkan nama ${type === "dir" ? "folder" : "file"}:`,
-    );
-
-    if (!name || !name.trim()) return;
-
-    const path = window.prompt(
-      "Masukkan absolute Linux path:",
-      `/home/${name.trim()}`,
-    );
-
-    if (!path || !path.startsWith("/")) {
-      window.alert("Path harus berupa absolute Linux path.");
-      return;
-    }
-
+  const handleSelectShortcut = async (selectedItem) => {
     const payload = {
       id: crypto.randomUUID(),
-      name: name.trim(),
-      type,
-      path,
+      name: selectedItem.name,
+      type: selectedItem.type,
+      path: selectedItem.path,
       pos: getNextPosition(),
     };
 
     try {
-      const result = await apiRequest("/desktop", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      const response = await api.post("/desktop", payload);
 
-      setItems((previous) => [...previous, result.item]);
+      setItems((previous) => [...previous, response.data.item]);
+
+      closeFinder();
     } catch (err) {
-      window.alert(err.message);
+      window.alert(
+        err.response?.data?.error ||
+          err.message ||
+          "Gagal menambahkan shortcut",
+      );
     }
   };
 
@@ -199,23 +156,30 @@ function DesktopIcons() {
   const deleteDesktopItem = async (item) => {
     closeContextMenu();
 
-    const confirmed = window.confirm(
-      `Hapus shortcut "${item.name}" dari desktop?`,
-    );
-
-    if (!confirmed) return;
-
     try {
-      await apiRequest(`/desktop/${encodeURIComponent(item.id)}`, {
-        method: "DELETE",
-      });
+      await api.delete(`/desktop/${encodeURIComponent(item.id)}`);
 
       setItems((previous) =>
         previous.filter((current) => current.id !== item.id),
       );
     } catch (err) {
-      window.alert(err.message);
+      window.alert(
+        err.response?.data?.error || err.message || "Gagal menghapus shortcut",
+      );
     }
+  };
+
+  // ==============================
+  // OPEN FINDER SELECTION MODE
+  // ==============================
+
+  const handleAddShortcut = () => {
+    closeContextMenu();
+
+    openFinder({
+      selectionMode: true,
+      onSelect: handleSelectShortcut,
+    });
   };
 
   // ==============================
@@ -228,8 +192,6 @@ function DesktopIcons() {
       onContextMenu={(event) => openContextMenu(event)}
     >
       <div className="desktop-icons">
-        {loading && <div className="desktop-message">Memuat desktop...</div>}
-
         {error && (
           <div className="desktop-message error">
             {error}
@@ -247,6 +209,7 @@ function DesktopIcons() {
                 gridRow: item.pos.x + 1,
                 gridColumn: item.pos.y + 1,
               }}
+              onClick={() => handleOpenDesktopItem(item)}
               onContextMenu={(event) => {
                 event.stopPropagation();
                 openContextMenu(event, item);
@@ -263,8 +226,8 @@ function DesktopIcons() {
       </div>
 
       {/* ==============================
-                FLOATING CONTEXT MENU
-            ============================== */}
+          FLOATING CONTEXT MENU
+      ============================== */}
 
       {contextMenu && (
         <div
@@ -288,20 +251,18 @@ function DesktopIcons() {
             <>
               <div className="context-menu-title">Desktop</div>
 
-              <button
-                onClick={() =>
-                  openFinder({
-                    selectionMode: true,
-                    onSelect: handleSelectShortcut,
-                  })
-                }
-              >
-                📎 Tambahkan shortcut
-              </button>
+              <button onClick={handleAddShortcut}>📎 Tambahkan shortcut</button>
 
               <div className="context-menu-divider" />
 
-              <button onClick={fetchDesktop}>🔄 Refresh</button>
+              <button
+                onClick={() => {
+                  closeContextMenu();
+                  fetchDesktop();
+                }}
+              >
+                🔄 Refresh
+              </button>
             </>
           )}
         </div>

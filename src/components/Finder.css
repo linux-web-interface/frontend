@@ -9,6 +9,8 @@
 .finder-window {
   width: 650px;
   height: 400px;
+  min-width: 400px;
+  min-height: 300px;
   position: relative;
   background: white;
   border-radius: 12px;
@@ -145,6 +147,12 @@
 .finder-navigation>button:disabled {
   opacity: 1;
   cursor: not-allowed;
+}
+
+.finder-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 /* Breadcrumb */
@@ -495,4 +503,33 @@
 
 .selection-cancel-button:hover {
   background: #e5e5e5;
+}
+
+.finder-search {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.finder-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  font-size: 13px;
+}
+
+.finder-search input:focus {
+  border-color: #4285f4;
+}
+
+.finder-search button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
+  color: #666;
 }
