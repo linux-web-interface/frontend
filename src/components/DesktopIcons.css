@@ -1,13 +1,26 @@
-.desktop-icons {
-  position: absolute;
+.container {
+  flex: 1;
+  min-height: 0;
+}
 
+.desktop-icons {
+  height: 100%;
   top: 60px;
   right: 25px;
-
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 80px);
+  justify-content: center;
+  grid-template-rows: repeat(auto-fill, 80px);
+  gap: 1rem;
+  padding-block: 1rem;
+  box-sizing: border-box;
+  max-height: calc((round(calc(100% / 80px)) * 80px) + (1 * 1rem));
+  overflow: hidden;
 }
+
+/* 100vw / 80px (12) */
+/* 11 * 1rem (11rem) */
+/* 100vw-11rem / 80px */
 
 .desktop-icon {
   display: flex;
@@ -30,4 +43,104 @@
 .desktop-icon:hover {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 10px;
+}
+
+.desktop-icon:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.icon-image {
+  font-size: 38px;
+  line-height: 42px;
+}
+
+.icon-name {
+  width: 100%;
+
+  font-size: 12px;
+  line-height: 16px;
+
+  overflow-wrap: anywhere;
+  text-shadow: 1px 1px 2px black;
+}
+
+.desktop-message {
+  grid-column: 1 / -1;
+  padding: 12px;
+  color: white;
+  font-size: 13px;
+}
+
+.desktop-message.error {
+  color: #ff7777;
+}
+
+.desktop-message button {
+  margin-left: 10px;
+}
+
+/* ==============================
+   FLOATING CONTEXT MENU
+============================== */
+
+.desktop-context-menu {
+  position: fixed;
+  z-index: 9999;
+
+  min-width: 190px;
+  padding: 5px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  background: #252525;
+  color: white;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+}
+
+.context-menu-title {
+  padding: 8px 10px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  color: #aaa;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 3px;
+}
+
+.desktop-context-menu button {
+  width: 100%;
+  padding: 9px 10px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+
+  color: white;
+  font-size: 13px;
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.desktop-context-menu button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.context-menu-divider {
+  height: 1px;
+  margin: 4px 0;
+  background: rgba(255, 255, 255, 0.12);
 }

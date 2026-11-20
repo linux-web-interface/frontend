@@ -6,30 +6,20 @@ import { useEffect, useState } from "react";
 import Finder from "./components/Finder";
 import { useDirectory } from "./contexts/DirectoryContext";
 import api from "./js/api";
+import { useFinder } from "./contexts/FinderContext";
 
 function App() {
-  const [isFinderOpen, setIsFinderOpen] = useState(false);
-  const [isFinderMinimized, setIsFinderMinimized] = useState(false);
   const { directory, setDirectory } = useDirectory();
-
-  useEffect(() => {
-    const getDirectory = async () => {
-      const request = await api.get("/dir");
-
-      setDirectory(request.data)
-    }
-
-    getDirectory();
-  }, []);
+  const {
+    isFinderOpen,
+    setIsFinderOpen,
+    isFinderMinimized,
+    setIsFinderMinimized,
+  } = useFinder();
 
   return (
     <div className="desktop">
       <MenuBar />
-
-      <div className="desktop-content">
-        <h1>GUI Linux Web Desktop</h1>
-        <p>Selamat datang di ujung dunia!</p>
-      </div>
 
       <DesktopIcons />
 
@@ -47,7 +37,11 @@ function App() {
       <Dock
         onOpenFinder={() => {
           setIsFinderOpen(true);
-          setIsFinderMinimized(false);
+          if (isFinderOpen) {
+            setIsFinderMinimized((prev) => !prev);
+          } else {
+            setIsFinderMinimized(false);
+          }
         }}
       />
     </div>
